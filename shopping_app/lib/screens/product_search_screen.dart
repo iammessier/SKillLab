@@ -44,7 +44,6 @@ class _ProductSearchScreenState extends State<ProductSearchScreen> {
 
   Future<void> compareSelectedProducts() async {
     if (selectedProducts.isNotEmpty) {
-      // Navigate to the comparison screen directly using selected products
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -58,12 +57,14 @@ class _ProductSearchScreenState extends State<ProductSearchScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Pricee',style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        title: Text(
+          'Pricee',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.blueAccent,
         actions: [
           IconButton(
@@ -86,38 +87,65 @@ class _ProductSearchScreenState extends State<ProductSearchScreen> {
         ],
       ),
       body: isLoading
-          ? Center(child: CircularProgressIndicator(color: Colors.blueAccent))
+          ? Center(
+              child: CircularProgressIndicator(
+              color: Colors.blueAccent,
+            ))
           : Column(
               children: [
                 Expanded(
                   child: ListView.builder(
                     itemCount: products.length,
                     itemBuilder: (context, index) {
-                      return ProductTile(
-                        product: products[index],
-                        isSelected: selectedProducts.contains(products[index]),
-                        onSelect: (bool? value) {
-                          setState(() {
-                            if (value == true) {
-                              selectedProducts.add(products[index]);
+                      return Card(
+                        margin: EdgeInsets.all(10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        elevation: 5,
+                        child: ListTile(
+                          leading: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.network(
+                              products[index].thumbnail,
+                              width: 60,
+                              height: 60,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          title: Text(
+                            products[index].title,
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            "${products[index].price} (${products[index].source})",
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
+                          trailing: Checkbox(
+                            value: selectedProducts.contains(products[index]),
+                            onChanged: (bool? value) {
+                              setState(() {
+                                if (value == true) {
+                                  selectedProducts.add(products[index]);
+                                } else {
+                                  selectedProducts.remove(products[index]);
+                                }
+                              });
+                            },
+                          ),
+                          onTap: () async {
+                            final url = products[index].link;
+                            if (await canLaunch(url)) {
+                              await launch(url);
                             } else {
-                              selectedProducts.remove(products[index]);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text('Could not launch $url',
+                                        style: TextStyle(color: Colors.red))),
+                              );
                             }
-                          });
-                        },
-                        onTap: () async {
-                          final url = products[index].link;
-                          if (await canLaunch(url)) {
-                            await launch(
-                                url); 
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                  content: Text('Could not launch $url',
-                                      style: TextStyle(color: Colors.red))),
-                            );
-                          }
-                        },
+                          },
+                        ),
                       );
                     },
                   ),
@@ -127,11 +155,11 @@ class _ProductSearchScreenState extends State<ProductSearchScreen> {
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          Colors.blueAccent, // Updated to use backgroundColor
+                      backgroundColor: Colors.blueAccent,
                       padding: EdgeInsets.symmetric(vertical: 15),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
+                      elevation: 5, // Added elevation for a better look
                     ),
                     child: Text(
                       "Compare Selected Products (${selectedProducts.length})",
@@ -139,7 +167,7 @@ class _ProductSearchScreenState extends State<ProductSearchScreen> {
                     ),
                     onPressed: compareSelectedProducts,
                   ),
-                )
+                ),
               ],
             ),
     );
