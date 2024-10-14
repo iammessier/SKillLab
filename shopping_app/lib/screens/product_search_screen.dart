@@ -4,6 +4,8 @@ import '../services/api_service.dart';
 import '../widgets/product_tile.dart';
 import 'product_comparison_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:lottie/lottie.dart'; // For Lottie animations
+import 'package:google_fonts/google_fonts.dart'; // For custom fonts
 
 class ProductSearchScreen extends StatefulWidget {
   @override
@@ -19,7 +21,7 @@ class _ProductSearchScreenState extends State<ProductSearchScreen> {
   @override
   void initState() {
     super.initState();
-    fetchProducts('iphone 13'); // Initial search query
+    fetchProducts(''); // Initial search query
   }
 
   Future<void> fetchProducts(String query) async {
@@ -47,12 +49,15 @@ class _ProductSearchScreenState extends State<ProductSearchScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => ProductComparisonScreen(products: selectedProducts),
+          builder: (context) =>
+              ProductComparisonScreen(products: selectedProducts),
         ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No products selected for comparison.', style: TextStyle(color: Colors.red))),
+        SnackBar(
+            content: Text('No products selected for comparison.',
+                style: TextStyle(color: Colors.red))),
       );
     }
   }
@@ -63,9 +68,11 @@ class _ProductSearchScreenState extends State<ProductSearchScreen> {
       appBar: AppBar(
         title: Text(
           'Pricee',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          style: GoogleFonts.poppins(
+              fontSize: 24, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.blueAccent,
+        elevation: 10,
         actions: [
           IconButton(
             icon: Icon(Icons.search),
@@ -88,63 +95,72 @@ class _ProductSearchScreenState extends State<ProductSearchScreen> {
       ),
       body: isLoading
           ? Center(
-              child: CircularProgressIndicator(
-              color: Colors.blueAccent,
-            ))
+              child: Lottie.asset(
+                'assets/animations/loading.json',
+                width: 200,
+                height: 200,
+              ),
+            )
           : Column(
               children: [
                 Expanded(
                   child: ListView.builder(
                     itemCount: products.length,
                     itemBuilder: (context, index) {
-                      return Card(
-                        margin: EdgeInsets.all(10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        elevation: 5,
-                        child: ListTile(
-                          leading: ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Image.network(
-                              products[index].thumbnail,
-                              width: 60,
-                              height: 60,
-                              fit: BoxFit.cover,
+                      return GestureDetector(
+                        onTap: () async {
+                          final url = products[index].link;
+                          if (await canLaunch(url)) {
+                            await launch(url);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Could not launch $url',
+                                    style: TextStyle(color: Colors.red)),
+                              ),
+                            );
+                          }
+                        },
+                        child: Card(
+                          margin: EdgeInsets.all(12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          elevation: 5,
+                          child: ListTile(
+                            contentPadding: EdgeInsets.all(15),
+                            leading: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.network(
+                                products[index].thumbnail,
+                                width: 60,
+                                height: 60,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            title: Text(
+                              products[index].title,
+                              style: GoogleFonts.roboto(
+                                  fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                            subtitle: Text(
+                              "${products[index].price} (${products[index].source})",
+                              style: GoogleFonts.roboto(
+                                  color: Colors.grey[600], fontSize: 14),
+                            ),
+                            trailing: Checkbox(
+                              value: selectedProducts.contains(products[index]),
+                              onChanged: (bool? value) {
+                                setState(() {
+                                  if (value == true) {
+                                    selectedProducts.add(products[index]);
+                                  } else {
+                                    selectedProducts.remove(products[index]);
+                                  }
+                                });
+                              },
                             ),
                           ),
-                          title: Text(
-                            products[index].title,
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Text(
-                            "${products[index].price} (${products[index].source})",
-                            style: TextStyle(color: Colors.grey[600]),
-                          ),
-                          trailing: Checkbox(
-                            value: selectedProducts.contains(products[index]),
-                            onChanged: (bool? value) {
-                              setState(() {
-                                if (value == true) {
-                                  selectedProducts.add(products[index]);
-                                } else {
-                                  selectedProducts.remove(products[index]);
-                                }
-                              });
-                            },
-                          ),
-                          onTap: () async {
-                            final url = products[index].link;
-                            if (await canLaunch(url)) {
-                              await launch(url);
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content: Text('Could not launch $url',
-                                        style: TextStyle(color: Colors.red))),
-                              );
-                            }
-                          },
                         ),
                       );
                     },
@@ -159,11 +175,12 @@ class _ProductSearchScreenState extends State<ProductSearchScreen> {
                       padding: EdgeInsets.symmetric(vertical: 15),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
-                      elevation: 5, // Added elevation for a better look
+                      elevation: 5,
                     ),
                     child: Text(
                       "Compare Selected Products (${selectedProducts.length})",
-                      style: TextStyle(fontSize: 18, color: Colors.white),
+                      style: GoogleFonts.roboto(
+                          fontSize: 18, color: Colors.white),
                     ),
                     onPressed: compareSelectedProducts,
                   ),
